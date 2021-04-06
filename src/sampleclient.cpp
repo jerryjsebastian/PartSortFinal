@@ -81,8 +81,7 @@ UaStatus SampleClient::connect()
 {
     UaStatus result;
 
-    // For now we use a hardcoded URL to connect to the local DemoServer
-    // UaString sURL("opc.tcp://localhost:48010");
+    // For now we use a hardcoded URL to connect to the opc ua server
     UaString sURL("opc.tcp://r202113:53530/OPCUA/SimulationServer");
 
     // Provide information about the client
@@ -145,7 +144,103 @@ UaStatus SampleClient::disconnect()
     return result;
 }
 
-UaStatus SampleClient::read()
+//UaStatus SampleClient::read()
+//{
+//    UaStatus          result;
+//    ServiceSettings   serviceSettings;
+//    UaReadValueIds    nodeToRead;
+//    UaDataValues      values;
+//    UaDiagnosticInfos diagnosticInfos;
+//
+//    // Configure one node to read
+//    // We read the value of the ServerStatus -> CurrentTime
+//    nodeToRead.create(1);
+//    /*nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
+//    nodeToRead[0].NodeId.Identifier.Numeric = OpcUaId_Server_ServerStatus_CurrentTime;*/
+//
+//    nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
+//    nodeToRead[0].NodeId.NamespaceIndex = 3;
+//    nodeToRead[0].NodeId.Identifier.Numeric = 1007;
+//
+//    printf("\nReading ...\n");
+//    result = m_pSession->read(
+//        serviceSettings,
+//        0,
+//        OpcUa_TimestampsToReturn_Both,
+//        nodeToRead,
+//        values,
+//        diagnosticInfos);
+//
+//    if (result.isGood())
+//    {
+//        // Read service succeded - check status of read value
+//        if (OpcUa_IsGood(values[0].StatusCode))
+//        {
+//            printf("ServerStatusCurrentTime: %s\n", UaVariant(values[0].Value).toString().toUtf8());
+//        }
+//        else
+//        {
+//            printf("Read failed for item[0] with status %s\n", UaStatus(values[0].StatusCode).toString().toUtf8());
+//        }
+//    }
+//    else
+//    {
+//        // Service call failed
+//        printf("Read failed with status %s\n", result.toString().toUtf8());
+//    }
+//
+//    return result;
+//}
+
+//UaStatus SampleClient::write()
+//{
+//    UaStatus          result;
+//    ServiceSettings   serviceSettings;
+//    UaWriteValues     nodeToWrite;
+//    UaStatusCodeArray results;
+//    UaDiagnosticInfos diagnosticInfos;
+//    UaVariant         tempValue;
+//
+//    // Configure one node to write
+//    nodeToWrite.create(1);
+//    nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
+//    nodeToWrite[0].NodeId.NamespaceIndex = 3;
+//    nodeToWrite[0].NodeId.Identifier.Numeric = 1007;
+//    tempValue.setDouble(96.96);
+//    tempValue.copyTo(&nodeToWrite[0].Value.Value);
+//
+//    printf("\nWriting ...\n");
+//    result = m_pSession->write(
+//        serviceSettings,
+//        nodeToWrite,
+//        results,
+//        diagnosticInfos);
+//
+//    if (result.isGood())
+//    {
+//        // Write service succeded - check individual status codes
+//        for (OpcUa_UInt32 i = 0; i < results.length(); i++)
+//        {
+//            if (OpcUa_IsGood(results[i]))
+//            {
+//                printf("Write succeeded for item[%d]\n", i);
+//            }
+//            else
+//            {
+//                printf("Write failed for item[%d] with status %s\n", i, UaStatus(results[i]).toString().toUtf8());
+//            }
+//        }
+//    }
+//    else
+//    {
+//        // Service call failed
+//        printf("Write failed with status %s\n", result.toString().toUtf8());
+//    }
+//
+//    return result;
+//}
+
+UaStatus SampleClient::readCam_req(UaString& loop)
 {
     UaStatus          result;
     ServiceSettings   serviceSettings;
@@ -154,16 +249,13 @@ UaStatus SampleClient::read()
     UaDiagnosticInfos diagnosticInfos;
 
     // Configure one node to read
-    // We read the value of the ServerStatus -> CurrentTime
     nodeToRead.create(1);
-    /*nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToRead[0].NodeId.Identifier.Numeric = OpcUaId_Server_ServerStatus_CurrentTime;*/
-
     nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToRead[0].NodeId.NamespaceIndex = 3;
-    nodeToRead[0].NodeId.Identifier.Numeric = 1007;
+    const UaString temp = ""; // Insert string identifier for loop variable here
+    UaNodeId J(temp, 2); // Insert namespace index for nodeID here
+    J.copyTo(&nodeToRead[0].NodeId);
 
-    printf("\nReading ...\n");
+    printf("\nReading Cam_req...\n");
     result = m_pSession->read(
         serviceSettings,
         0,
@@ -177,11 +269,12 @@ UaStatus SampleClient::read()
         // Read service succeded - check status of read value
         if (OpcUa_IsGood(values[0].StatusCode))
         {
-            printf("ServerStatusCurrentTime: %s\n", UaVariant(values[0].Value).toString().toUtf8());
+            loop.operator=(UaVariant(values[0].Value).toString());
+            printf("Loop variable state: %s\n", UaVariant(values[0].Value).toString().toUtf8());
         }
         else
         {
-            printf("Read failed for item[0] with status %s\n", UaStatus(values[0].StatusCode).toString().toUtf8());
+            printf("Read failed for Loop variable with status %s\n", UaStatus(values[0].StatusCode).toString().toUtf8());
         }
     }
     else
@@ -193,7 +286,7 @@ UaStatus SampleClient::read()
     return result;
 }
 
-UaStatus SampleClient::readLoop(OpcUa_Boolean Loop)
+UaStatus SampleClient::readCam_nr(UaString& cam)
 {
     UaStatus          result;
     ServiceSettings   serviceSettings;
@@ -202,16 +295,13 @@ UaStatus SampleClient::readLoop(OpcUa_Boolean Loop)
     UaDiagnosticInfos diagnosticInfos;
 
     // Configure one node to read
-    // We read the value of the ServerStatus -> CurrentTime
     nodeToRead.create(1);
-    /*nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToRead[0].NodeId.Identifier.Numeric = OpcUaId_Server_ServerStatus_CurrentTime;*/
-
     nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToRead[0].NodeId.NamespaceIndex = 3;
-    nodeToRead[0].NodeId.Identifier.Numeric = 1007;
+    const UaString temp = ""; // Insert
+    UaNodeId J(temp, 2); // Insert
+    J.copyTo(&nodeToRead[0].NodeId);
 
-    printf("\nReading ...\n");
+    printf("\nReading Cam_nr...\n");
     result = m_pSession->read(
         serviceSettings,
         0,
@@ -225,12 +315,12 @@ UaStatus SampleClient::readLoop(OpcUa_Boolean Loop)
         // Read service succeded - check status of read value
         if (OpcUa_IsGood(values[0].StatusCode))
         {
-            UaVariant(values[0].Value).toBool(Loop);
-            printf("ServerStatusCurrentTime: %s\n", UaVariant(values[0].Value).toString().toUtf8());
+            cam.operator=(UaVariant(values[0].Value).toString());
+            printf("Cam number variable state: %s\n", UaVariant(values[0].Value).toString().toUtf8());
         }
         else
         {
-            printf("Read failed for item[0] with status %s\n", UaStatus(values[0].StatusCode).toString().toUtf8());
+            printf("Read failed for Cam number variable with status %s\n", UaStatus(values[0].StatusCode).toString().toUtf8());
         }
     }
     else
@@ -242,59 +332,7 @@ UaStatus SampleClient::readLoop(OpcUa_Boolean Loop)
     return result;
 }
 
-UaStatus SampleClient::readLoop(UaString Loop)
-{
-    UaStatus          result;
-    ServiceSettings   serviceSettings;
-    UaReadValueIds    nodeToRead;
-    UaDataValues      values;
-    UaDiagnosticInfos diagnosticInfos;
-
-    // Configure one node to read
-    // We read the value of the ServerStatus -> CurrentTime
-    nodeToRead.create(1);
-    /*nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToRead[0].NodeId.Identifier.Numeric = OpcUaId_Server_ServerStatus_CurrentTime;*/
-
-    nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToRead[0].NodeId.NamespaceIndex = 3;
-    nodeToRead[0].NodeId.Identifier.Numeric = 1007;
-
-    printf("\nReading ...\n");
-    result = m_pSession->read(
-        serviceSettings,
-        0,
-        OpcUa_TimestampsToReturn_Both,
-        nodeToRead,
-        values,
-        diagnosticInfos);
-
-    if (result.isGood())
-    {
-        // Read service succeded - check status of read value
-        if (OpcUa_IsGood(values[0].StatusCode))
-        {
-            UaString name;
-            name = UaVariant(values[0].Value).toString().toUtf8();
-            std:cout << "Extra line: " << name << std::endl;
-            UaVariant(values[0].Value).toBool(Loop);
-            printf("ServerStatusCurrentTime: %s\n", UaVariant(values[0].Value).toString().toUtf8());
-        }
-        else
-        {
-            printf("Read failed for item[0] with status %s\n", UaStatus(values[0].StatusCode).toString().toUtf8());
-        }
-    }
-    else
-    {
-        // Service call failed
-        printf("Read failed with status %s\n", result.toString().toUtf8());
-    }
-
-    return result;
-}
-
-UaStatus SampleClient::write()
+UaStatus SampleClient::writeCam_rdy(OpcUa_Boolean ready)
 {
     UaStatus          result;
     ServiceSettings   serviceSettings;
@@ -304,18 +342,15 @@ UaStatus SampleClient::write()
     UaVariant         tempValue;
 
     // Configure one node to read
-    // We read the value of the ServerStatus -> CurrentTime
     nodeToWrite.create(1);
-    /*nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToRead[0].NodeId.Identifier.Numeric = OpcUaId_Server_ServerStatus_CurrentTime;*/
-
     nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    nodeToWrite[0].NodeId.NamespaceIndex = 3;
-    nodeToWrite[0].NodeId.Identifier.Numeric = 1007;
-    tempValue.setDouble(96.96);
+    const UaString temp = ""; // Insert
+    UaNodeId J(temp, 2); // Insert
+    J.copyTo(&nodeToWrite[0].NodeId);
+    tempValue.setBool(ready);
     tempValue.copyTo(&nodeToWrite[0].Value.Value);
 
-    printf("\nWriting ...\n");
+    printf("\nWriting Cam_rdy...\n");
     result = m_pSession->write(
         serviceSettings,
         nodeToWrite,
@@ -329,11 +364,160 @@ UaStatus SampleClient::write()
         {
             if (OpcUa_IsGood(results[i]))
             {
-                printf("Write succeeded for item[%d]\n", i);
+                printf("Write succeeded for Cam_rdy variable\n");
             }
             else
             {
-                printf("Write failed for item[%d] with status %s\n", i, UaStatus(results[i]).toString().toUtf8());
+                printf("Write failed for Cam_rdy variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
+            }
+        }
+    }
+    else
+    {
+        // Service call failed
+        printf("Write failed with status %s\n", result.toString().toUtf8());
+    }
+
+    return result;
+}
+
+UaStatus SampleClient::writeCam_done(OpcUa_Boolean done)
+{
+    UaStatus          result;
+    ServiceSettings   serviceSettings;
+    UaWriteValues     nodeToWrite;
+    UaStatusCodeArray results;
+    UaDiagnosticInfos diagnosticInfos;
+    UaVariant         tempValue;
+
+    // Configure one node to read
+    nodeToWrite.create(1);
+    nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
+    const UaString temp = ""; // Insert
+    UaNodeId J(temp, 2); // Insert
+    J.copyTo(&nodeToWrite[0].NodeId);
+    tempValue.setBool(done);
+    tempValue.copyTo(&nodeToWrite[0].Value.Value);
+
+    printf("\nWriting Cam_done...\n");
+    result = m_pSession->write(
+        serviceSettings,
+        nodeToWrite,
+        results,
+        diagnosticInfos);
+
+    if (result.isGood())
+    {
+        // Write service succeded - check individual status codes
+        for (OpcUa_UInt32 i = 0; i < results.length(); i++)
+        {
+            if (OpcUa_IsGood(results[i]))
+            {
+                printf("Write succeeded for Cam_done variable\n");
+            }
+            else
+            {
+                printf("Write failed for Cam_done variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
+            }
+        }
+    }
+    else
+    {
+        // Service call failed
+        printf("Write failed with status %s\n", result.toString().toUtf8());
+    }
+
+    return result;
+}
+
+UaStatus SampleClient::writePos_XYZ(OpcUa_Int32 val, const UaString identifier)
+{
+    UaStatus          result;
+    ServiceSettings   serviceSettings;
+    UaWriteValues     nodeToWrite;
+    UaStatusCodeArray results;
+    UaDiagnosticInfos diagnosticInfos;
+    UaVariant         tempValue;
+
+    // Configure one node to read
+    nodeToWrite.create(1);
+    nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
+    UaString temp;
+    temp.operator=(identifier);
+    UaNodeId J(temp, 2);
+    J.copyTo(&nodeToWrite[0].NodeId);
+    tempValue.setInt32(val);
+    tempValue.copyTo(&nodeToWrite[0].Value.Value);
+
+    printf("\nWriting Pos...\n");
+    result = m_pSession->write(
+        serviceSettings,
+        nodeToWrite,
+        results,
+        diagnosticInfos);
+
+    if (result.isGood())
+    {
+        // Write service succeded - check individual status codes
+        for (OpcUa_UInt32 i = 0; i < results.length(); i++)
+        {
+            if (OpcUa_IsGood(results[i]))
+            {
+                printf("Write succeeded for Pos variable\n");
+            }
+            else
+            {
+                printf("Write failed for Pos variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
+            }
+        }
+    }
+    else
+    {
+        // Service call failed
+        printf("Write failed with status %s\n", result.toString().toUtf8());
+    }
+
+    return result;
+}
+
+UaStatus SampleClient::writeRot(OpcUa_Boolean rot, const UaString identifier)
+{
+    UaStatus          result;
+    ServiceSettings   serviceSettings;
+    UaWriteValues     nodeToWrite;
+    UaStatusCodeArray results;
+    UaDiagnosticInfos diagnosticInfos;
+    UaVariant         tempValue;
+
+    // Configure one node to read
+    nodeToWrite.create(1);
+    nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
+    UaString temp;
+    temp.operator=(identifier);
+    UaNodeId J(temp, 2);
+    J.copyTo(&nodeToWrite[0].NodeId);
+    tempValue.setBool(rot);
+    tempValue.copyTo(&nodeToWrite[0].Value.Value);
+
+    printf("\nWriting Rot...\n");
+    result = m_pSession->write(
+        serviceSettings,
+        nodeToWrite,
+        results,
+        diagnosticInfos);
+
+    if (result.isGood())
+    {
+        // Write service succeded - check individual status codes
+        for (OpcUa_UInt32 i = 0; i < results.length(); i++)
+        {
+            if (OpcUa_IsGood(results[i]))
+            {
+                printf("Write succeeded for Rot variable\n");
+            }
+            else
+            {
+                printf("Write failed for Rot variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
             }
         }
     }
