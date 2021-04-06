@@ -1,0 +1,9 @@
+ Intrinsic of "Depth" / 848x480 / {Z16}
+  Width:        848
+  Height:       480
+  PPX:          419.130310058594
+  PPY:          244.014984130859
+  Fx:           424.588165283203
+  Fy:           424.588165283203
+  Distortion:   Brown Conrady
+  Coeffs:       0       0       0       0       0

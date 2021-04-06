@@ -1,0 +1,9 @@
+ Intrinsic of "Color" / 848x480 / {YUYV/RGB8/BGR8/RGBA8/BGRA8/Y16}
+  Width:        848
+  Height:       480
+  PPX:          429.042907714844
+  PPY:          250.478607177734
+  Fx:           611.078430175781
+  Fy:           610.966735839844
+  Distortion:   Inverse Brown Conrady
+  Coeffs:       0       0       0       0       0

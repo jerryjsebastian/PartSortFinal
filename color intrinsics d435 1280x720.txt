@@ -1,0 +1,9 @@
+ Intrinsic of "Color" / 1280x720 / {YUYV/RGB8/BGR8/RGBA8/BGRA8/Y16}
+  Width:        1280
+  Height:       720
+  PPX:          647.564331054688
+  PPY:          375.717926025391
+  Fx:           916.61767578125
+  Fy:           916.450134277344
+  Distortion:   Inverse Brown Conrady
+  Coeffs:       0       0       0       0       0
