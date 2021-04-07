@@ -53,6 +53,7 @@ public:
     UaStatus writeCam_done(OpcUa_Boolean done);
     UaStatus writePos_XYZ(OpcUa_Int32 val, const UaString identifier);
     UaStatus writeRot(OpcUa_Boolean rot, const UaString identifier);
+    UaStatus writeTray_empty(OpcUa_Boolean finish);
 
 private:
     UaSession* m_pSession;

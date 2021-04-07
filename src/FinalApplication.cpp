@@ -98,6 +98,7 @@ int main(int argc, char* argv[]) try
                     cam_nr = 0;
                 else if (output.operator==("2"))
                     cam_nr = 1;
+                _sleep(1000);
             }
             rs2::device dev = devices[cam_nr];
 
@@ -152,6 +153,7 @@ int main(int argc, char* argv[]) try
                 while (request.operator==("false"))
                 {
                     pMyClient->readCam_req(request);
+                    _sleep(1000);
                 }
 
                 std::vector<std::vector<int32_t>> points3D;
@@ -203,7 +205,7 @@ int main(int argc, char* argv[]) try
 
                 cv::imwrite("FinalStack1.png", hist_equalized_image); */
 
-                cv::cvtColor(dMat_colored, dMat_colored, cv::COLOR_BGR2RGB);
+                cv::cvtColor(dMat_colored, dMat_colored, cv::COLOR_BGR2RGB); // Necessary for D435?
                 std::string FileName = logfile();
                 cv::imwrite(FileName+".png", dMat_colored);
                 save_frame_raw_data(FileName+".raw", filtered);
@@ -220,10 +222,13 @@ int main(int argc, char* argv[]) try
                 float nmsThreshold = 0.5;
                 int flag = detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                     yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis, coordinates);
+
+                // Empty tray/No detections scenario
                 if (flag == 0)
                 {
                     cout << "No detections in frame!" << endl;
-                    continue;
+                    pMyClient->writeTray_empty(true);
+                    break;
                 }
                 else
                     cout << "Object Detection done!" << endl;
@@ -349,8 +354,6 @@ int main(int argc, char* argv[]) try
 
                 pMyClient->writeCam_done(true);
                 
-                // Need some signal here to trigger camera change if required
-
             } // End of one imaging loop
 
         } // End of whole camera loop

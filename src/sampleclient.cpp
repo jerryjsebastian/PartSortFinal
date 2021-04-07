@@ -297,8 +297,8 @@ UaStatus SampleClient::readCam_nr(UaString& cam)
     // Configure one node to read
     nodeToRead.create(1);
     nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = "S7-1.DB.3DCamera.Output.CAM_Nr"; // Insert
-    UaNodeId J(temp, 2); // Insert
+    const UaString temp = "S7-1.DB.3DCamera.Output.CAM_Nr";
+    UaNodeId J(temp, 2);
     J.copyTo(&nodeToRead[0].NodeId);
 
     printf("\nReading Cam_nr...\n");
@@ -344,8 +344,8 @@ UaStatus SampleClient::writeCam_rdy(OpcUa_Boolean ready)
     // Configure one node to read
     nodeToWrite.create(1);
     nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_rdy"; // Insert
-    UaNodeId J(temp, 2); // Insert
+    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_rdy";
+    UaNodeId J(temp, 2);
     J.copyTo(&nodeToWrite[0].NodeId);
     tempValue.setBool(ready);
     tempValue.copyTo(&nodeToWrite[0].Value.Value);
@@ -393,8 +393,8 @@ UaStatus SampleClient::writeCam_done(OpcUa_Boolean done)
     // Configure one node to read
     nodeToWrite.create(1);
     nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_done"; // Insert
-    UaNodeId J(temp, 2); // Insert
+    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_done";
+    UaNodeId J(temp, 2);
     J.copyTo(&nodeToWrite[0].NodeId);
     tempValue.setBool(done);
     tempValue.copyTo(&nodeToWrite[0].Value.Value);
@@ -518,6 +518,55 @@ UaStatus SampleClient::writeRot(OpcUa_Boolean rot, const UaString identifier)
             else
             {
                 printf("Write failed for Rot variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
+            }
+        }
+    }
+    else
+    {
+        // Service call failed
+        printf("Write failed with status %s\n", result.toString().toUtf8());
+    }
+
+    return result;
+}
+
+UaStatus SampleClient::writeTray_empty(OpcUa_Boolean finish)
+{
+    UaStatus          result;
+    ServiceSettings   serviceSettings;
+    UaWriteValues     nodeToWrite;
+    UaStatusCodeArray results;
+    UaDiagnosticInfos diagnosticInfos;
+    UaVariant         tempValue;
+
+    // Configure one node to read
+    nodeToWrite.create(1);
+    nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
+    const UaString temp = "S7-1.DB.3DCamera.Input.Tray_Empty";
+    UaNodeId J(temp, 2);
+    J.copyTo(&nodeToWrite[0].NodeId);
+    tempValue.setBool(finish);
+    tempValue.copyTo(&nodeToWrite[0].Value.Value);
+
+    printf("\nWriting Tray_Empty...\n");
+    result = m_pSession->write(
+        serviceSettings,
+        nodeToWrite,
+        results,
+        diagnosticInfos);
+
+    if (result.isGood())
+    {
+        // Write service succeded - check individual status codes
+        for (OpcUa_UInt32 i = 0; i < results.length(); i++)
+        {
+            if (OpcUa_IsGood(results[i]))
+            {
+                printf("Write succeeded for Tray_empty variable\n");
+            }
+            else
+            {
+                printf("Write failed for Tray_Empty variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
             }
         }
     }

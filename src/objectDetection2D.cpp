@@ -134,4 +134,6 @@ int detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThre
         cv::imshow(windowName, visImg);
         // cv::waitKey(1); // wait for key to be pressed
     }
+
+    return 1;
 }
