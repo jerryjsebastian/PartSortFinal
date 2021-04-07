@@ -67,7 +67,6 @@ int main(int argc, char* argv[]) try
 
         // object detection
         string yoloBasePath = dataPath + "dat/yolo/deinSchrank/";
-        // string yoloBasePath = dataPath + "dat/yolo/";
         string yoloClassesFile = yoloBasePath + "obj.names";
         string yoloModelConfiguration = yoloBasePath + "yolov3-tiny.cfg";
         string yoloModelWeights = yoloBasePath + "yolov3-tiny_last.weights";
@@ -79,23 +78,36 @@ int main(int argc, char* argv[]) try
 
         float depth_scale;
 
-        // Declare depth colorizer for pretty visualization of depth data
-        // rs2::colorizer color_map;
-        // Use black to white color map
-        // color_map.set_option(RS2_OPTION_COLOR_SCHEME, 2.f);
         rs2::pipeline pipe;
         //create context
         rs2::context ctx;
         //get device
         auto devices = ctx.query_devices();
-        rs2::device dev = devices[0];
+
+        // Signalling the plc that the camera is ready
+        pMyClient->writeCam_rdy(true);
+
+        // Selection of camera happens here
+        UaString output = "";
+        int cam_nr = 2;
+        while (output.operator==(""))
+        {
+            pMyClient->readCam_nr(output);
+            if (output.operator==("1"))
+                cam_nr = 0;
+            else if (output.operator==("2"))
+                cam_nr = 1;
+            else
+                cam_nr = 2;
+        }
+        rs2::device dev = devices[cam_nr];
 
         config cfg;
         cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 720, RS2_FORMAT_Z16, 30);
         cfg.enable_stream(RS2_STREAM_COLOR, 1280, 720, RS2_FORMAT_RGB8, 30);
 
         string serial = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-        string json_file_name = "deinSchrank.json";
+        string json_file_name = "DefaultPreset_D435.json";
 
         cout << "Configuring camera : " << serial << endl;
 
@@ -126,20 +138,23 @@ int main(int argc, char* argv[]) try
                 break;
             }
         }
-
         cout << "Depth Scale: " << depth_scale << endl;
 
-        // post processing
-        // Declare filters
-        rs2::decimation_filter dec_filter;  // Decimation - reduces depth frame density
+        // post processing filters
         rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
         rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise
         rs2::disparity_transform depth_to_disparity(true);  // object which converts from depth image to points
         rs2::disparity_transform disparity_to_depth(false);  // object which converts from points to depth image
 
-        char c;
         while(1)
         {
+            // Waiting for camera request from PLC
+            UaString request = "false";
+            while (request.operator==("false"))
+            {
+                pMyClient->readCam_req(request);
+            }
+
             std::vector<std::vector<float>> points3D;
 
             // Skips some frames to allow for auto-exposure stabilization
@@ -148,20 +163,16 @@ int main(int argc, char* argv[]) try
             // Wait for the next set of frames from the camera
             auto frames = pipe.wait_for_frames();
             frames = align_to.process(frames);
-            // auto depth = frames.get_depth_frame().apply_filter(color_map);
             auto depth = frames.get_depth_frame();
             auto color_frame = frames.get_color_frame();
 
             // set filter parameters and options
-            dec_filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, 1.0f);
             spat_filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, 2.0f);
             spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.5f);
             spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20.0f);
-            // spat_filter.set_option(RS2_OPTION_HOLES_FILL, 5); // 5 = fill all the zero pixels
             temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.4f);
             temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20.0f);
 
-            // auto filtered = dec_filter.process(depth);
             auto filtered = depth_to_disparity.process(depth);
             filtered = spat_filter.process(filtered);
             filtered = temp_filter.process(filtered);
@@ -207,26 +218,13 @@ int main(int argc, char* argv[]) try
             float nmsThreshold = 0.5;
             detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                 yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis, coordinates);
-
             cout << "Object Detection done!" << endl;
-
-            /* int X, count = 0;
-            while (!myFile.eof())
-            {
-                myFile >> X;
-                coordinates.push_back(X);
-                count++;
-            } */
 
             cout << ".." << endl;
 
             readRAW(filtered, depth_scale, coordinates, intrinsics, points3D);
 
             cout << ".." << endl;
-
-            // float dist;
-            // dist = *min_element(BB_heights.begin(), BB_heights.end());
-            // cout << "The highest plane is at a height of: " << dist * depth_scale << " m" << endl;
 
             sort(points3D.begin(), points3D.end(), sortFunc);
             cout << "The highest plane is at a height of: " << points3D[0][2] << " m" << endl;
@@ -236,19 +234,13 @@ int main(int argc, char* argv[]) try
             {
                 cout << "X, Y, Z of Label[" << points3D[i][3] << "] in m: " << points3D[i][0] << " " << points3D[i][1] << " " << points3D[i][2] << " " << endl;
             }
-
             points3D.clear();
 
             auto stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
             std::cout << "Elapsed time is " << duration.count() << "ms" << endl;
-            cout << "Press any key to continue, ESC to exit the program. " << endl;
-
-            BOOL Loop = false;
-            while (!Loop)
-            {
-                status = pMyClient->readLoop(Loop);
-            }
+  
+            pMyClient->writeCam_done(true);
         }
 
     } //End of OPC-UA connection

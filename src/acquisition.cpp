@@ -56,19 +56,33 @@ bool frame_metadata_to_csv(const std::string& filename, rs2::frame frame, rs2_in
             csv << "Distortion," << rs2_distortion_to_string(intrinsics.model) << std::endl;
         } */
 
-        // Intrisics for depth (1280x720)
-        intrinsics.fx = 890.644348144531;
-        intrinsics.fy = 890.644348144531;
+        //// Intrisics for depth (1280x720) for d415
+        //intrinsics.fx = 890.644348144531;
+        //intrinsics.fy = 890.644348144531;
+        //intrinsics.height = 720;
+        //intrinsics.ppx = 634.755920410156;
+        //intrinsics.ppy = 342.459014892578;
+        //intrinsics.width = 1280;
+        //intrinsics.model = RS2_DISTORTION_BROWN_CONRADY;
+        //intrinsics.coeffs[0] = 0;
+        //intrinsics.coeffs[1] = 0;
+        //intrinsics.coeffs[2] = 0;
+        //intrinsics.coeffs[3] = 0;
+        //intrinsics.coeffs[4] = 0; 
+
+        //Intrinsics for depth (1280x720) for d435
+        intrinsics.fx = 640.887817382813;
+        intrinsics.fy = 640.887817382813;
         intrinsics.height = 720;
-        intrinsics.ppx = 634.755920410156;
-        intrinsics.ppy = 342.459014892578;
+        intrinsics.ppx = 632.649536132813;
+        intrinsics.ppy = 366.060363769531;
         intrinsics.width = 1280;
         intrinsics.model = RS2_DISTORTION_BROWN_CONRADY;
         intrinsics.coeffs[0] = 0;
         intrinsics.coeffs[1] = 0;
         intrinsics.coeffs[2] = 0;
         intrinsics.coeffs[3] = 0;
-        intrinsics.coeffs[4] = 0; 
+        intrinsics.coeffs[4] = 0;
 
         ret = true;
     }
@@ -128,10 +142,7 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
             Point3D.push_back(point[2]); // pushing back each coordinate
             Point3D.push_back(point[3]); // to track the sticker number
             points3D.push_back(Point3D); // pushing back the whole point to a vector of points
-            
-            // cout << "X,Y,Z of barcode sticker" << i / 4 << " (in m): " << point[0] << " " << point[1] << " " << point[2] << endl;
-            // cout << "Heights of barcode sticker" << i / 4 << " (in m): " << point[2] << endl;
-
+         
             if ((i + 4) > coordinatesX.size())
                 break;
             else
