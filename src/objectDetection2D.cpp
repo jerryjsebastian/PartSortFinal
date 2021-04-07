@@ -13,11 +13,9 @@ using namespace std;
 
 // detects objects in an image using the YOLO library and a set of pre-trained objects from the COCO database;
 // a set of 80 classes is listed in "coco.names" and pre-trained weights are stored in "yolov3.weights"
-void detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThreshold, float nmsThreshold,
+int detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThreshold, float nmsThreshold,
     std::string basePath, std::string classesFile, std::string modelConfiguration, std::string modelWeights, bool bVis, std::vector<int>& coordinates)
 {
-    // std::ofstream myFile("BBcoordinatesXY.csv", std::ios_base::trunc);
-
     // load class names from file
     vector<string> classes;
     ifstream ifs(classesFile.c_str());
@@ -51,6 +49,9 @@ void detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThr
     // invoke forward propagation through network
     net.setInput(blob);
     net.forward(netOutput, names);
+
+    if (netOutput.size() == 0)
+        return 0;
 
     // Scan through all bounding boxes and keep only the ones with high confidence
     vector<int> classIds; vector<float> confidences; vector<cv::Rect> boxes;
@@ -114,10 +115,7 @@ void detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThr
             coordinates.push_back(top + height);
             cv::rectangle(visImg, cv::Point(left, top), cv::Point(left + width, top + height), cv::Scalar(0, 255, 0), 2);
 
-            // myFile << left << "\n" << top << "\n" << left + width << "\n" << top + height << "\n";
-
             string label = cv::format("%.2f", (*it).confidence);
-            // label = classes[((*it).classID)] + ":" + label;
             label = classes[((*it).classID)] + "[" + to_string((*it).boxID) + "]:" + label;
            
             // Display label at the top of the bounding box
@@ -129,13 +127,11 @@ void detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThr
 
         }
 
-        // myFile.close();
-
         string windowName = "Barcode Detection";
         cv::namedWindow(windowName, cv::WINDOW_NORMAL);
         cv::resizeWindow(windowName, 1280, 720);
         cv::circle(visImg, cv::Point(640, 360), 3, CV_RGB(255, 0, 0), 2);
         cv::imshow(windowName, visImg);
-        cv::waitKey(1); // wait for key to be pressed
+        // cv::waitKey(1); // wait for key to be pressed
     }
 }

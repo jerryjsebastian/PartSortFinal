@@ -26,7 +26,6 @@ using namespace cv;
 #define LOGNAME_SIZE 20
 
 std::vector<int> coordinates; // vector holding coordinates of bounding boxes
-// std::vector<float> BB_heights; // vector holding heights of bounding boxes
 
 // Helper function for naming/logging of files based on date and time
 std::string logfile(void)
@@ -173,12 +172,14 @@ int main(int argc, char* argv[]) try
                 temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.4f);
                 temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20.0f);
 
+                // processing of frames
                 auto filtered = depth_to_disparity.process(depth);
                 filtered = spat_filter.process(filtered);
                 filtered = temp_filter.process(filtered);
                 filtered = disparity_to_depth.process(filtered);
 
                 rs2_intrinsics intrinsics;
+                // RGB image in matrix format
                 cv::Mat dMat_colored = cv::Mat(cv::Size(1280, 720), CV_8UC3, (void*)color_frame.get_data());
 
                 /* Histogram equalization test
@@ -208,7 +209,7 @@ int main(int argc, char* argv[]) try
                 save_frame_raw_data(FileName+".raw", filtered);
                 frame_metadata_to_csv(FileName+"-Metadata.csv", filtered, intrinsics);
 
-                // push image into data frame buffer
+                // push rgb image into data frame buffer
                 DataFrame frame;
                 frame.cameraImg = dMat_colored;
                 // frame.cameraImg = hist_equalized_image;
@@ -217,14 +218,18 @@ int main(int argc, char* argv[]) try
                 /* DETECT & CLASSIFY OBJECTS */
                 float confThreshold = 0.2;
                 float nmsThreshold = 0.5;
-                detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
+                int flag = detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                     yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis, coordinates);
-                cout << "Object Detection done!" << endl;
-
+                if (flag == 0)
+                {
+                    cout << "No detections in frame!" << endl;
+                    continue;
+                }
+                else
+                    cout << "Object Detection done!" << endl;
+          
                 cout << ".." << endl;
-
                 readRAW(filtered, depth_scale, coordinates, intrinsics, points3D);
-
                 cout << ".." << endl;
 
                 sort(points3D.begin(), points3D.end(), sortFunc);
@@ -340,7 +345,7 @@ int main(int argc, char* argv[]) try
 
                 auto stop = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-                std::cout << "Elapsed time is " << duration.count() << "ms" << endl;
+                std::cout << "Elapsed time for one imaging step is " << (duration.count())/1000 << "s" << endl;
 
                 pMyClient->writeCam_done(true);
                 
