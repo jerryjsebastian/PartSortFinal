@@ -228,13 +228,114 @@ int main(int argc, char* argv[]) try
                 cout << ".." << endl;
 
                 sort(points3D.begin(), points3D.end(), sortFunc);
-                cout << "The highest plane is at a height of: " << points3D[0][2] << " m" << endl;
+                cout << "The highest plane is at a height of: " << points3D[0][2] << " mm" << endl;
 
                 // Print out the post-sorted vector of points
                 for (int i = 0; i < points3D.size(); i++)
                 {
-                    cout << "X, Y, Z of Label[" << points3D[i][3] << "] in m: " << points3D[i][0] << " " << points3D[i][1] << " " << points3D[i][2] << " " << endl;
+                    cout << "X, Y, Z of Label[" << points3D[i][3] << "] in mm: " << points3D[i][0] << " " << points3D[i][1] << " " << points3D[i][2] 
+                         << " with orientation " << points3D[i][4] << " " << endl;
                 }
+
+                // Writing the points to PLC
+                for (int i = 0; i < points3D.size(); i++)
+                {
+                    switch (i) // Used switch case because cant use iterator in UaString
+                    {
+                    case 0: pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[0].X");
+                            pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[0].Y");
+                            pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[0].Z");
+                            if (points3D[i][4] == 0)
+                                pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[0].ROT"); // false if horizontal
+                            else
+                                pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[0].ROT"); // true if vertical
+                            break;
+
+                    case 1:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[1].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[1].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[1].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[1].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[1].ROT");
+                             break;
+
+                    case 2:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[2].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[2].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[2].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[2].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[2].ROT");
+                             break;
+
+                    case 3:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[3].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[3].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[3].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[3].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[3].ROT");
+                             break;
+
+                    case 4:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[4].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[4].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[4].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[4].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[4].ROT");
+                             break;
+                        
+                    case 5:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[5].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[5].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[5].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[5].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[5].ROT");
+                             break;
+
+                    case 6:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[6].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[6].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[6].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[6].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[6].ROT");
+                             break;
+
+                    case 7:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[7].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[7].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[7].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[7].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[7].ROT");
+                             break;
+
+                    case 8:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[8].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[8].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[8].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[8].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[8].ROT");
+                             break;
+
+                    case 9:  pMyClient->writePos_XYZ(points3D[i][0], "S7-1.DB.3DCamera.Input.POS.[9].X");
+                             pMyClient->writePos_XYZ(points3D[i][1], "S7-1.DB.3DCamera.Input.POS.[9].Y");
+                             pMyClient->writePos_XYZ(points3D[i][2], "S7-1.DB.3DCamera.Input.POS.[9].Z");
+                             if (points3D[i][4] == 0)
+                                 pMyClient->writeRot(false, "S7-1.DB.3DCamera.Input.POS.[9].ROT");
+                             else
+                                 pMyClient->writeRot(true, "S7-1.DB.3DCamera.Input.POS.[9].ROT");
+                             break;
+
+                    default: break;
+                    }            
+                }
+
                 points3D.clear();
 
                 auto stop = std::chrono::high_resolution_clock::now();

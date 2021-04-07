@@ -111,15 +111,19 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
                 pixel_count++;
             }
         }
-        // cout << "Heights of barcodes (in m): " << sum_depth / pixel_count << endl;
         average_depth = sum_depth / pixel_count;
 
+        // Midpoint of bounding box
         int BB_mid_height = (coordinatesX[i + 1] + coordinatesX[i + 3]) / 2;
         int BB_mid_width = (coordinatesX[i] + coordinatesX[i + 2]) / 2;
+        // Width and height of bounding box
+        float BB_height = abs(coordinatesX[i + 1] - coordinatesX[i + 3]);
+        float BB_width = abs(coordinatesX[i] - coordinatesX[i + 2]);
         float height = (depthMat.at<short>(BB_mid_height, BB_mid_width));
 
         std::vector<float> Point3D; // vector to store each point
 
+        // eliminating some of the half-stickers
         if (average_depth > 1.2 * height)
         {
            i += 4;
@@ -130,17 +134,25 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
             float BB[2]; // center point of bounding box
             BB[0] = BB_mid_width;
             BB[1] = BB_mid_height;
-            float point[4]; // 3d position of center point of bounding box, in camera coordinate system
+            float point[5]; // 3d position of center point of bounding box, in camera coordinate system (X,Y,Z)
+                            // 4th element is the bounding box number
+                            // 5th element is the orientation 0 for horizontal, 1 for vertical
 
             rs2_deproject_pixel_to_point(point, &depth_intrinsics, BB, height * depth_scale);
-            // BB_heights.push_back(height);
-            myFile << point[0] << "\n" << point[1] << "\n" << point[2] << "\n";
+
+            if (BB_width > BB_height)
+                point[4] = 0;
+            else
+                point[4] = 1;
+
+            myFile << point[0] << "\n" << point[1] << "\n" << point[2] << "\n" << point[4];
             point[3] = i/4;
 
-            Point3D.push_back(point[0]);
-            Point3D.push_back(point[1]);
-            Point3D.push_back(point[2]); // pushing back each coordinate
+            Point3D.push_back(point[0]*1000);
+            Point3D.push_back(point[1]*1000);
+            Point3D.push_back(point[2]*1000); // pushing back each coordinate, *1000 is for converting from m to mm
             Point3D.push_back(point[3]); // to track the sticker number
+            Point3D.push_back(point[4]); // to track the orientation of sticker
             points3D.push_back(Point3D); // pushing back the whole point to a vector of points
          
             if ((i + 4) > coordinatesX.size())
