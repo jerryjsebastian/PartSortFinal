@@ -90,7 +90,8 @@ bool frame_metadata_to_csv(const std::string& filename, rs2::frame frame, rs2_in
     return ret;
 }
 
-void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX, const rs2_intrinsics& depth_intrinsics, std::vector<std::vector<float>>& points3D)
+void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX, const rs2_intrinsics& depth_intrinsics, 
+             std::vector<std::vector<int32_t>>& points3D, int cam)
 {
     std::ofstream myFile("X-Y-Z.csv", std::ios_base::trunc);
 
@@ -121,7 +122,7 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
         float BB_width = abs(coordinatesX[i] - coordinatesX[i + 2]);
         float height = (depthMat.at<short>(BB_mid_height, BB_mid_width));
 
-        std::vector<float> Point3D; // vector to store each point
+        std::vector<int32_t> Point3D; // vector to store each point
 
         // eliminating some of the half-stickers
         if (average_depth > 1.2 * height)
@@ -147,6 +148,26 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
 
             myFile << point[0] << "\n" << point[1] << "\n" << point[2] << "\n" << point[4];
             point[3] = i/4;
+
+            //// transformation from camera coordinate system to world coordinate system
+            //if (cam == 0)
+            //{
+            //    // Camera at site 31
+            //    point[0] += 0; 
+            //    point[0] *= -1; // X coordinate
+            //    point[1] += 0; // Y coordinate
+            //    point[2] -= 0;
+            //    point[2] *= -1; // Z coordinate
+            //}
+            //else if  (cam == 1)
+            //{
+            //    // Camera at site 32
+            //    point[0] += 0;
+            //    point[1] += 0;
+            //    point[1] *= -1;
+            //    point[2] -= 0;
+            //    point[2] *= -1;
+            //}
 
             Point3D.push_back(point[0]*1000);
             Point3D.push_back(point[1]*1000);

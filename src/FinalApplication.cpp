@@ -37,7 +37,7 @@ std::string logfile(void)
 }
 
 // Helper function for sorting points based on z value, in descending order
-bool sortFunc(const vector<float>& p1, const vector<float>& p2)
+bool sortFunc(const vector<int32_t>& p1, const vector<int32_t>& p2)
 {
     return p1[2] < p2[2];
 }
@@ -154,7 +154,7 @@ int main(int argc, char* argv[]) try
                     pMyClient->readCam_req(request);
                 }
 
-                std::vector<std::vector<float>> points3D;
+                std::vector<std::vector<int32_t>> points3D;
 
                 // Skips some frames to allow for auto-exposure stabilization
                 for (int i = 0; i < 10; i++) pipe.wait_for_frames();
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) try
                     cout << "Object Detection done!" << endl;
           
                 cout << ".." << endl;
-                readRAW(filtered, depth_scale, coordinates, intrinsics, points3D);
+                readRAW(filtered, depth_scale, coordinates, intrinsics, points3D, cam_nr);
                 cout << ".." << endl;
 
                 sort(points3D.begin(), points3D.end(), sortFunc);
