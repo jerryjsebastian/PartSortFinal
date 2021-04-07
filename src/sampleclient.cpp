@@ -82,7 +82,7 @@ UaStatus SampleClient::connect()
     UaStatus result;
 
     // For now we use a hardcoded URL to connect to the opc ua server
-    UaString sURL("opc.tcp://r202113:53530/OPCUA/SimulationServer");
+    UaString sURL("opc.tcp://10.51.0.111:4840");
 
     // Provide information about the client
     SessionConnectInfo sessionConnectInfo;
@@ -251,7 +251,7 @@ UaStatus SampleClient::readCam_req(UaString& loop)
     // Configure one node to read
     nodeToRead.create(1);
     nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = ""; // Insert string identifier for loop variable here
+    const UaString temp = "S7-1.DB.3DCamera.Output.CAM_req"; // Insert string identifier for loop variable here
     UaNodeId J(temp, 2); // Insert namespace index for nodeID here
     J.copyTo(&nodeToRead[0].NodeId);
 
@@ -297,7 +297,7 @@ UaStatus SampleClient::readCam_nr(UaString& cam)
     // Configure one node to read
     nodeToRead.create(1);
     nodeToRead[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = ""; // Insert
+    const UaString temp = "S7-1.DB.3DCamera.Output.CAM_Nr"; // Insert
     UaNodeId J(temp, 2); // Insert
     J.copyTo(&nodeToRead[0].NodeId);
 
@@ -344,7 +344,7 @@ UaStatus SampleClient::writeCam_rdy(OpcUa_Boolean ready)
     // Configure one node to read
     nodeToWrite.create(1);
     nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = ""; // Insert
+    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_rdy"; // Insert
     UaNodeId J(temp, 2); // Insert
     J.copyTo(&nodeToWrite[0].NodeId);
     tempValue.setBool(ready);
@@ -393,7 +393,7 @@ UaStatus SampleClient::writeCam_done(OpcUa_Boolean done)
     // Configure one node to read
     nodeToWrite.create(1);
     nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = ""; // Insert
+    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_done"; // Insert
     UaNodeId J(temp, 2); // Insert
     J.copyTo(&nodeToWrite[0].NodeId);
     tempValue.setBool(done);

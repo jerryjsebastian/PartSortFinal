@@ -87,161 +87,167 @@ int main(int argc, char* argv[]) try
         // Signalling the plc that the camera is ready
         pMyClient->writeCam_rdy(true);
 
-        // Selection of camera happens here
-        UaString output = "";
-        int cam_nr = 2;
-        while (output.operator==(""))
+        while (1)
         {
-            pMyClient->readCam_nr(output);
-            if (output.operator==("1"))
-                cam_nr = 0;
-            else if (output.operator==("2"))
-                cam_nr = 1;
-            else
-                cam_nr = 2;
-        }
-        rs2::device dev = devices[cam_nr];
-
-        config cfg;
-        cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 720, RS2_FORMAT_Z16, 30);
-        cfg.enable_stream(RS2_STREAM_COLOR, 1280, 720, RS2_FORMAT_RGB8, 30);
-
-        string serial = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
-        string json_file_name = "DefaultPreset_D435.json";
-
-        cout << "Configuring camera : " << serial << endl;
-
-        auto advanced_mode_dev = dev.as<rs400::advanced_mode>();
-
-        // Check if advanced-mode is enabled to pass the custom config
-        if (!advanced_mode_dev.is_enabled())
-        {
-            // If not, enable advanced-mode
-            advanced_mode_dev.toggle_advanced_mode(true);
-            cout << "Advanced mode enabled. " << endl;
-        }
-
-        std::ifstream t(json_file_name);
-        std::string preset_json((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-        advanced_mode_dev.load_json(preset_json);
-        cfg.enable_device(serial);
-        pipe.start(cfg);
-
-        rs2::align align_to(RS2_STREAM_COLOR);
-
-        for (rs2::sensor& sensor : dev.query_sensors())
-        {
-            if (rs2::depth_sensor dpt = sensor.as<rs2::depth_sensor>())
+            // Selection of camera happens here
+            UaString output = "";
+            int cam_nr = 2;
+            while (output.operator==(""))
             {
-                // Depth scale is needed for the kinfu set-up
-                depth_scale = dpt.get_depth_scale();
-                break;
+                pMyClient->readCam_nr(output);
+                if (output.operator==("1"))
+                    cam_nr = 0;
+                else if (output.operator==("2"))
+                    cam_nr = 1;
             }
-        }
-        cout << "Depth Scale: " << depth_scale << endl;
+            rs2::device dev = devices[cam_nr];
 
-        // post processing filters
-        rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
-        rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise
-        rs2::disparity_transform depth_to_disparity(true);  // object which converts from depth image to points
-        rs2::disparity_transform disparity_to_depth(false);  // object which converts from points to depth image
+            config cfg;
+            cfg.enable_stream(RS2_STREAM_DEPTH, 1280, 720, RS2_FORMAT_Z16, 30);
+            cfg.enable_stream(RS2_STREAM_COLOR, 1280, 720, RS2_FORMAT_RGB8, 30);
 
-        while(1)
-        {
-            // Waiting for camera request from PLC
-            UaString request = "false";
-            while (request.operator==("false"))
+            string serial = dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+            string json_file_name = "DefaultPreset_D435.json";
+
+            cout << "Configuring camera : " << serial << endl;
+
+            auto advanced_mode_dev = dev.as<rs400::advanced_mode>();
+
+            // Check if advanced-mode is enabled to pass the custom config
+            if (!advanced_mode_dev.is_enabled())
             {
-                pMyClient->readCam_req(request);
+                // If not, enable advanced-mode
+                advanced_mode_dev.toggle_advanced_mode(true);
+                cout << "Advanced mode enabled. " << endl;
             }
 
-            std::vector<std::vector<float>> points3D;
+            std::ifstream t(json_file_name);
+            std::string preset_json((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+            advanced_mode_dev.load_json(preset_json);
+            cfg.enable_device(serial);
+            pipe.start(cfg);
 
-            // Skips some frames to allow for auto-exposure stabilization
-            for (int i = 0; i < 10; i++) pipe.wait_for_frames();
+            rs2::align align_to(RS2_STREAM_COLOR);
 
-            // Wait for the next set of frames from the camera
-            auto frames = pipe.wait_for_frames();
-            frames = align_to.process(frames);
-            auto depth = frames.get_depth_frame();
-            auto color_frame = frames.get_color_frame();
-
-            // set filter parameters and options
-            spat_filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, 2.0f);
-            spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.5f);
-            spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20.0f);
-            temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.4f);
-            temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20.0f);
-
-            auto filtered = depth_to_disparity.process(depth);
-            filtered = spat_filter.process(filtered);
-            filtered = temp_filter.process(filtered);
-            filtered = disparity_to_depth.process(filtered);
-
-            rs2_intrinsics intrinsics;
-            cv::Mat dMat_colored = cv::Mat(cv::Size(1280, 720), CV_8UC3, (void*)color_frame.get_data());
-
-            /* Histogram equalization test
-            //Convert the image from BGR to YCrCb color space
-            Mat hist_equalized_image;
-            cvtColor(dMat_colored, hist_equalized_image, COLOR_BGR2YCrCb);
-
-            //Split the image into 3 channels; Y, Cr and Cb channels respectively and store it in a std::vector
-            vector<Mat> vec_channels;
-            split(hist_equalized_image, vec_channels);
-
-            //Equalize the histogram of only the Y channel
-            equalizeHist(vec_channels[0], vec_channels[0]);
-
-            //Merge 3 channels in the vector to form the color image in YCrCB color space.
-            merge(vec_channels, hist_equalized_image);
-
-            //Convert the histogram equalized image from YCrCb to BGR color space again
-            cvtColor(hist_equalized_image, hist_equalized_image, COLOR_YCrCb2BGR);
-            cvtColor(hist_equalized_image, hist_equalized_image, COLOR_BGR2RGB);
-
-            cv::imwrite("FinalStack1.png", hist_equalized_image); */
-
-            cv::cvtColor(dMat_colored, dMat_colored, cv::COLOR_BGR2RGB);
-            cv::imwrite("FinalStack1.png", dMat_colored);
-            save_frame_raw_data("FinalStack1.raw", filtered);
-            frame_metadata_to_csv("FinalStack1-Metadata.csv", filtered, intrinsics);
-
-            // push image into data frame buffer
-            DataFrame frame;
-            frame.cameraImg = dMat_colored;
-            // frame.cameraImg = hist_equalized_image;
-            dataBuffer.push_back(frame);
-
-            /* DETECT & CLASSIFY OBJECTS */
-            float confThreshold = 0.2;
-            float nmsThreshold = 0.5;
-            detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
-                yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis, coordinates);
-            cout << "Object Detection done!" << endl;
-
-            cout << ".." << endl;
-
-            readRAW(filtered, depth_scale, coordinates, intrinsics, points3D);
-
-            cout << ".." << endl;
-
-            sort(points3D.begin(), points3D.end(), sortFunc);
-            cout << "The highest plane is at a height of: " << points3D[0][2] << " m" << endl;
-
-            // Print out the post-sorted vector of points
-            for (int i = 0; i < points3D.size(); i++)
+            for (rs2::sensor& sensor : dev.query_sensors())
             {
-                cout << "X, Y, Z of Label[" << points3D[i][3] << "] in m: " << points3D[i][0] << " " << points3D[i][1] << " " << points3D[i][2] << " " << endl;
+                if (rs2::depth_sensor dpt = sensor.as<rs2::depth_sensor>())
+                {
+                    // Depth scale is needed for the kinfu set-up
+                    depth_scale = dpt.get_depth_scale();
+                    break;
+                }
             }
-            points3D.clear();
+            cout << "Depth Scale: " << depth_scale << endl;
 
-            auto stop = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-            std::cout << "Elapsed time is " << duration.count() << "ms" << endl;
-  
-            pMyClient->writeCam_done(true);
-        }
+            // post processing filters
+            rs2::spatial_filter spat_filter;    // Spatial    - edge-preserving spatial smoothing
+            rs2::temporal_filter temp_filter;   // Temporal   - reduces temporal noise
+            rs2::disparity_transform depth_to_disparity(true);  // object which converts from depth image to points
+            rs2::disparity_transform disparity_to_depth(false);  // object which converts from points to depth image
+
+            while (1)
+            {
+                // Waiting for camera request from PLC
+                UaString request = "false";
+                while (request.operator==("false"))
+                {
+                    pMyClient->readCam_req(request);
+                }
+
+                std::vector<std::vector<float>> points3D;
+
+                // Skips some frames to allow for auto-exposure stabilization
+                for (int i = 0; i < 10; i++) pipe.wait_for_frames();
+
+                // Wait for the next set of frames from the camera
+                auto frames = pipe.wait_for_frames();
+                frames = align_to.process(frames);
+                auto depth = frames.get_depth_frame();
+                auto color_frame = frames.get_color_frame();
+
+                // set filter parameters and options
+                spat_filter.set_option(RS2_OPTION_FILTER_MAGNITUDE, 2.0f);
+                spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.5f);
+                spat_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20.0f);
+                temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.4f);
+                temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 20.0f);
+
+                auto filtered = depth_to_disparity.process(depth);
+                filtered = spat_filter.process(filtered);
+                filtered = temp_filter.process(filtered);
+                filtered = disparity_to_depth.process(filtered);
+
+                rs2_intrinsics intrinsics;
+                cv::Mat dMat_colored = cv::Mat(cv::Size(1280, 720), CV_8UC3, (void*)color_frame.get_data());
+
+                /* Histogram equalization test
+                //Convert the image from BGR to YCrCb color space
+                Mat hist_equalized_image;
+                cvtColor(dMat_colored, hist_equalized_image, COLOR_BGR2YCrCb);
+
+                //Split the image into 3 channels; Y, Cr and Cb channels respectively and store it in a std::vector
+                vector<Mat> vec_channels;
+                split(hist_equalized_image, vec_channels);
+
+                //Equalize the histogram of only the Y channel
+                equalizeHist(vec_channels[0], vec_channels[0]);
+
+                //Merge 3 channels in the vector to form the color image in YCrCB color space.
+                merge(vec_channels, hist_equalized_image);
+
+                //Convert the histogram equalized image from YCrCb to BGR color space again
+                cvtColor(hist_equalized_image, hist_equalized_image, COLOR_YCrCb2BGR);
+                cvtColor(hist_equalized_image, hist_equalized_image, COLOR_BGR2RGB);
+
+                cv::imwrite("FinalStack1.png", hist_equalized_image); */
+
+                cv::cvtColor(dMat_colored, dMat_colored, cv::COLOR_BGR2RGB);
+                std::string FileName = logfile();
+                cv::imwrite(FileName+".png", dMat_colored);
+                save_frame_raw_data(FileName+".raw", filtered);
+                frame_metadata_to_csv(FileName+"-Metadata.csv", filtered, intrinsics);
+
+                // push image into data frame buffer
+                DataFrame frame;
+                frame.cameraImg = dMat_colored;
+                // frame.cameraImg = hist_equalized_image;
+                dataBuffer.push_back(frame);
+
+                /* DETECT & CLASSIFY OBJECTS */
+                float confThreshold = 0.2;
+                float nmsThreshold = 0.5;
+                detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
+                    yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis, coordinates);
+                cout << "Object Detection done!" << endl;
+
+                cout << ".." << endl;
+
+                readRAW(filtered, depth_scale, coordinates, intrinsics, points3D);
+
+                cout << ".." << endl;
+
+                sort(points3D.begin(), points3D.end(), sortFunc);
+                cout << "The highest plane is at a height of: " << points3D[0][2] << " m" << endl;
+
+                // Print out the post-sorted vector of points
+                for (int i = 0; i < points3D.size(); i++)
+                {
+                    cout << "X, Y, Z of Label[" << points3D[i][3] << "] in m: " << points3D[i][0] << " " << points3D[i][1] << " " << points3D[i][2] << " " << endl;
+                }
+                points3D.clear();
+
+                auto stop = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+                std::cout << "Elapsed time is " << duration.count() << "ms" << endl;
+
+                pMyClient->writeCam_done(true);
+                
+                // Need some signal here to trigger camera change if required
+
+            } // End of one imaging loop
+
+        } // End of whole camera loop
 
     } //End of OPC-UA connection
 
