@@ -49,7 +49,8 @@ public:
     // UaStatus write();
     UaStatus readCam_req(UaString& loop);
     UaStatus readCam_nr(UaString& cam);
-    UaStatus writeCam_rdy(OpcUa_Boolean ready);
+    UaStatus writeCam_rdy_1(OpcUa_Boolean ready);
+    UaStatus writeCam_rdy_2(OpcUa_Boolean ready);
     UaStatus writeCam_done(OpcUa_Boolean done);
     UaStatus writePos_XYZ(OpcUa_Int32 val, const UaString identifier);
     UaStatus writeRot(OpcUa_Boolean rot, const UaString identifier);

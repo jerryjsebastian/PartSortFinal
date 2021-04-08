@@ -332,7 +332,7 @@ UaStatus SampleClient::readCam_nr(UaString& cam)
     return result;
 }
 
-UaStatus SampleClient::writeCam_rdy(OpcUa_Boolean ready)
+UaStatus SampleClient::writeCam_rdy_1(OpcUa_Boolean ready)
 {
     UaStatus          result;
     ServiceSettings   serviceSettings;
@@ -344,13 +344,13 @@ UaStatus SampleClient::writeCam_rdy(OpcUa_Boolean ready)
     // Configure one node to read
     nodeToWrite.create(1);
     nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
-    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_rdy";
+    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_rdy_1";
     UaNodeId J(temp, 2);
     J.copyTo(&nodeToWrite[0].NodeId);
     tempValue.setBool(ready);
     tempValue.copyTo(&nodeToWrite[0].Value.Value);
 
-    printf("\nWriting Cam_rdy...\n");
+    printf("\nWriting Cam_rdy_1...\n");
     result = m_pSession->write(
         serviceSettings,
         nodeToWrite,
@@ -364,11 +364,60 @@ UaStatus SampleClient::writeCam_rdy(OpcUa_Boolean ready)
         {
             if (OpcUa_IsGood(results[i]))
             {
-                printf("Write succeeded for Cam_rdy variable\n");
+                printf("Write succeeded for Cam_rdy_1 variable\n");
             }
             else
             {
-                printf("Write failed for Cam_rdy variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
+                printf("Write failed for Cam_rdy_1 variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
+            }
+        }
+    }
+    else
+    {
+        // Service call failed
+        printf("Write failed with status %s\n", result.toString().toUtf8());
+    }
+
+    return result;
+}
+
+UaStatus SampleClient::writeCam_rdy_2(OpcUa_Boolean ready)
+{
+    UaStatus          result;
+    ServiceSettings   serviceSettings;
+    UaWriteValues     nodeToWrite;
+    UaStatusCodeArray results;
+    UaDiagnosticInfos diagnosticInfos;
+    UaVariant         tempValue;
+
+    // Configure one node to read
+    nodeToWrite.create(1);
+    nodeToWrite[0].AttributeId = OpcUa_Attributes_Value;
+    const UaString temp = "S7-1.DB.3DCamera.Input.CAM_rdy_2";
+    UaNodeId J(temp, 2);
+    J.copyTo(&nodeToWrite[0].NodeId);
+    tempValue.setBool(ready);
+    tempValue.copyTo(&nodeToWrite[0].Value.Value);
+
+    printf("\nWriting Cam_rdy_2...\n");
+    result = m_pSession->write(
+        serviceSettings,
+        nodeToWrite,
+        results,
+        diagnosticInfos);
+
+    if (result.isGood())
+    {
+        // Write service succeded - check individual status codes
+        for (OpcUa_UInt32 i = 0; i < results.length(); i++)
+        {
+            if (OpcUa_IsGood(results[i]))
+            {
+                printf("Write succeeded for Cam_rdy_2 variable\n");
+            }
+            else
+            {
+                printf("Write failed for Cam_rdy_2 variable with status %s\n", UaStatus(results[i]).toString().toUtf8());
             }
         }
     }

@@ -33,7 +33,7 @@ bool frame_metadata_to_csv(const std::string& filename, rs2::frame frame, rs2_in
     auto image = frame.as<rs2::video_frame>();
     if (image)
     {
-        std::ofstream csv(filename);
+        // std::ofstream csv(filename);
 
         /* auto profile = image.get_profile();
         csv << "Frame Info: " << std::endl << "Type," << profile.stream_name() << std::endl;
@@ -140,12 +140,12 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
 
         std::vector<int32_t> Point3D; // vector to store each point
 
-        if ((avg_AllDepths - height) >= 19) // extracting positions only if the highest plane
-        {
-            i += 4;
-            continue;
-        }
-        else if (average_depth > 1.2 * height) // eliminating some of the half-stickers
+        //if ((avg_AllDepths - height) >= 18) // extracting positions only if the highest plane
+        //{
+        //    i += 4;
+        //    continue;
+        //}
+        if (average_depth > 1.2 * height) // eliminating some of the half-stickers
         {
            i += 4;
            continue;
@@ -166,7 +166,7 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
             else
                 point[4] = 1;
 
-            myFile << point[0] << "\n" << point[1] << "\n" << point[2] << "\n" << point[4];
+            myFile << point[0] << "\n" << point[1] << "\n" << point[2] << "\n" << point[4] << "\n";
             point[3] = i/4;
 
             //// transformation from camera coordinate system to world coordinate system
