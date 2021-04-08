@@ -97,12 +97,28 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
 
     int IMAGE_WIDTH = 1280, IMAGE_HEIGHT = 720;
     cv::Mat depthMat(cv::Size(IMAGE_WIDTH, IMAGE_HEIGHT), CV_16U, (void*)FRAME.get_data());
-    int i = 0;
-    // cout << "coordinatesX - size: " << coordinatesX.size() << endl;
+    
+    std::vector<short> AllDepths; // to calculate the average of top 1% of heights in the depth image
+    double sum_AllDepths = 0;
+    for (int k = 0; k < IMAGE_WIDTH; k++)
+    {
+        for (int j = 0; j < IMAGE_HEIGHT; j++)
+        {
+            float height = (depthMat.at<short>(j, k));
+            AllDepths.push_back(height);
+        }
+    }
+    std::sort(AllDepths.begin(), AllDepths.end(), std::greater<>()); //sorting in descending order
+    for (int l = 0; l < (0.01 * IMAGE_WIDTH * IMAGE_HEIGHT); l++)
+    {
+        sum_AllDepths += AllDepths.at(l);
+    }
+    double avg_AllDepths = sum_AllDepths / (0.01 * IMAGE_WIDTH * IMAGE_HEIGHT);
 
+    int i = 0;
     while (i < coordinatesX.size())
     {
-        float sum_depth = 0, average_depth = 0;
+        float sum_depth = 0, average_depth = 0; // to calculate average depth over each barcode sticker area
         int pixel_count = 0;
         for (int k = coordinatesX[i]; k <= coordinatesX[i+2]; k++)
         {
@@ -124,8 +140,12 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
 
         std::vector<int32_t> Point3D; // vector to store each point
 
-        // eliminating some of the half-stickers
-        if (average_depth > 1.2 * height)
+        if ((avg_AllDepths - height) >= 19) // extracting positions only if the highest plane
+        {
+            i += 4;
+            continue;
+        }
+        else if (average_depth > 1.2 * height) // eliminating some of the half-stickers
         {
            i += 4;
            continue;

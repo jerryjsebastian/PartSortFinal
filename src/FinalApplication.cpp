@@ -58,8 +58,6 @@ int main(int argc, char* argv[]) try
     // Connect succeeded
     if (status.isGood())
     {
-        auto start = std::chrono::high_resolution_clock::now();
-
         /* INIT VARIABLES AND DATA STRUCTURES */
         // data location
         string dataPath = "../";
@@ -97,8 +95,8 @@ int main(int argc, char* argv[]) try
                 if (output.operator==("1"))
                     cam_nr = 0;
                 else if (output.operator==("2"))
-                    cam_nr = 1;
-                _sleep(1000);
+                    cam_nr = 0; // change
+                _sleep(2000);
             }
             rs2::device dev = devices[cam_nr];
 
@@ -148,12 +146,14 @@ int main(int argc, char* argv[]) try
 
             while (1)
             {
+                auto start = std::chrono::high_resolution_clock::now();
+
                 // Waiting for camera request from PLC
                 UaString request = "false";
                 while (request.operator==("false"))
                 {
                     pMyClient->readCam_req(request);
-                    _sleep(1000);
+                    _sleep(2000);
                 }
 
                 std::vector<std::vector<int32_t>> points3D;
@@ -353,6 +353,14 @@ int main(int argc, char* argv[]) try
                 std::cout << "Elapsed time for one imaging step is " << (duration.count())/1000 << "s" << endl;
 
                 pMyClient->writeCam_done(true);
+
+                while (request.operator==("true"))
+                {
+                    pMyClient->readCam_req(request);
+                    _sleep(2000);
+                }
+
+                pMyClient->writeCam_done(false);
                 
             } // End of one imaging loop
 
