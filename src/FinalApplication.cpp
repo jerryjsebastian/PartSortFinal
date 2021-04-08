@@ -193,36 +193,36 @@ int main(int argc, char* argv[]) try
                 // RGB image in matrix format
                 cv::Mat dMat_colored = cv::Mat(cv::Size(1280, 720), CV_8UC3, (void*)color_frame.get_data());
 
-                /* Histogram equalization test
-                //Convert the image from BGR to YCrCb color space
-                Mat hist_equalized_image;
-                cvtColor(dMat_colored, hist_equalized_image, COLOR_BGR2YCrCb);
+                // Histogram equalization test
+                // Convert the image from BGR to YCrCb color space
+                //Mat hist_equalized_image;
+                //cvtColor(dMat_colored, hist_equalized_image, COLOR_BGR2YCrCb);
 
-                //Split the image into 3 channels; Y, Cr and Cb channels respectively and store it in a std::vector
-                vector<Mat> vec_channels;
-                split(hist_equalized_image, vec_channels);
+                ////Split the image into 3 channels; Y, Cr and Cb channels respectively and store it in a std::vector
+                //vector<Mat> vec_channels;
+                //split(hist_equalized_image, vec_channels);
 
-                //Equalize the histogram of only the Y channel
-                equalizeHist(vec_channels[0], vec_channels[0]);
+                ////Equalize the histogram of only the Y channel
+                //equalizeHist(vec_channels[0], vec_channels[0]);
 
-                //Merge 3 channels in the vector to form the color image in YCrCB color space.
-                merge(vec_channels, hist_equalized_image);
+                ////Merge 3 channels in the vector to form the color image in YCrCB color space.
+                //merge(vec_channels, hist_equalized_image);
 
-                //Convert the histogram equalized image from YCrCb to BGR color space again
-                cvtColor(hist_equalized_image, hist_equalized_image, COLOR_YCrCb2BGR);
-                cvtColor(hist_equalized_image, hist_equalized_image, COLOR_BGR2RGB);
+                ////Convert the histogram equalized image from YCrCb to BGR color space again
+                //cvtColor(hist_equalized_image, hist_equalized_image, COLOR_YCrCb2BGR);
+                //cvtColor(hist_equalized_image, hist_equalized_image, COLOR_BGR2RGB);
 
-                cv::imwrite("FinalStack1.png", hist_equalized_image); */
+                //cv::imwrite("Stack.png", hist_equalized_image); 
 
-                cv::cvtColor(dMat_colored, dMat_colored, cv::COLOR_BGR2RGB); // Necessary for D435?
-                std::string FileName = logfile();
+                // cv::cvtColor(dMat_colored, dMat_colored, cv::COLOR_BGR2RGB); // Necessary for D435?
+                /*std::string FileName = logfile();
                 cv::imwrite(FileName+".png", dMat_colored);
                 save_frame_raw_data(FileName+".raw", filtered);
-                frame_metadata_to_csv(FileName+"-Metadata.csv", filtered, intrinsics);
+                frame_metadata_to_csv(FileName+"-Metadata.csv", filtered, intrinsics);*/
 
-                /*cv::imwrite("Stack.png", dMat_colored);
+                cv::imwrite("Stack.png", dMat_colored);
                 save_frame_raw_data("Stack.raw", filtered);
-                frame_metadata_to_csv("Stack-Metadata.csv", filtered, intrinsics);*/
+                frame_metadata_to_csv("Stack-Metadata.csv", filtered, intrinsics);
 
                 // push rgb image into data frame buffer
                 DataFrame frame;
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) try
                 dataBuffer.push_back(frame);
 
                 /* DETECT & CLASSIFY OBJECTS */
-                float confThreshold = 0.2;
+                float confThreshold = 0.1;
                 float nmsThreshold = 0.4;
                 int flag = detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                     yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis, coordinates);

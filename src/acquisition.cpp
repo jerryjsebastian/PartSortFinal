@@ -166,6 +166,7 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
             else
                 point[4] = 1;
 
+            // Saving in camera coordinate system
             myFile << point[0] << "\n" << point[1] << "\n" << point[2] << "\n" << point[4] << "\n";
             point[3] = i/4;
 
@@ -188,6 +189,12 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
             //    point[2] -= 0;
             //    point[2] *= -1;
             //}
+            if (point[0] > 0)
+                point[0] -= 0.160;
+            else
+                point[0] += 0.340;
+            point[1] -= 0.020;
+            point[2] -= 1.995;
 
             Point3D.push_back(point[0]*1000);
             Point3D.push_back(point[1]*1000);
