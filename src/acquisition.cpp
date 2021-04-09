@@ -70,14 +70,28 @@ bool frame_metadata_to_csv(const std::string& filename, rs2::frame frame, rs2_in
         //intrinsics.coeffs[3] = 0;
         //intrinsics.coeffs[4] = 0; 
 
-        //Intrinsics for depth (1280x720) for d435
-        intrinsics.fx = 640.887817382813;
-        intrinsics.fy = 640.887817382813;
+        ////Intrinsics for depth (1280x720) for d435
+        //intrinsics.fx = 640.887817382813;
+        //intrinsics.fy = 640.887817382813;
+        //intrinsics.height = 720;
+        //intrinsics.ppx = 632.649536132813;
+        //intrinsics.ppy = 366.060363769531;
+        //intrinsics.width = 1280;
+        //intrinsics.model = RS2_DISTORTION_BROWN_CONRADY;
+        //intrinsics.coeffs[0] = 0;
+        //intrinsics.coeffs[1] = 0;
+        //intrinsics.coeffs[2] = 0;
+        //intrinsics.coeffs[3] = 0;
+        //intrinsics.coeffs[4] = 0;
+
+        //Intrinsics for color (1280x720) for d435
+        intrinsics.fx = 916.61767578125;
+        intrinsics.fy = 916.450134277344;
         intrinsics.height = 720;
-        intrinsics.ppx = 632.649536132813;
-        intrinsics.ppy = 366.060363769531;
+        intrinsics.ppx = 647.564331054688;
+        intrinsics.ppy = 375.717926025391;
         intrinsics.width = 1280;
-        intrinsics.model = RS2_DISTORTION_BROWN_CONRADY;
+        intrinsics.model = RS2_DISTORTION_INVERSE_BROWN_CONRADY;
         intrinsics.coeffs[0] = 0;
         intrinsics.coeffs[1] = 0;
         intrinsics.coeffs[2] = 0;
@@ -189,12 +203,21 @@ void readRAW(rs2::frame FRAME, float depth_scale, std::vector<int> coordinatesX,
             //    point[2] -= 0;
             //    point[2] *= -1;
             //}
+
             if (point[0] > 0)
-                point[0] -= 0.160;
+
+            {
+                point[0] += 0.036;
+                point[0] *= -1;
+            }
             else
-                point[0] += 0.340;
-            point[1] -= 0.020;
-            point[2] -= 1.995;
+            {
+                point[0] *= -1;
+                point[0] -= 0.036;
+            }
+            point[1] -= 0.030; // 10 to 15 cm only
+            point[2] -= 2.155;
+            point[2] *= -1;
 
             Point3D.push_back(point[0]*1000);
             Point3D.push_back(point[1]*1000);
