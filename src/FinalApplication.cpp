@@ -36,7 +36,7 @@ std::string logfile(void)
     return name;
 }
 
-// Helper function for sorting points based on z value, in descending order
+// Macro function for sorting points based on z value, in decreasing order
 bool sortFunc(const vector<int32_t>& p1, const vector<int32_t>& p2)
 {
     return p1[2] < p2[2];
@@ -233,39 +233,32 @@ int main(int argc, char* argv[]) try
                 /* DETECT & CLASSIFY OBJECTS */
                 float confThreshold = 0.1;
                 float nmsThreshold = 0.4;
-                int flag = detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
+                detectObjects((dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->boundingBoxes, confThreshold, nmsThreshold,
                     yoloBasePath, yoloClassesFile, yoloModelConfiguration, yoloModelWeights, bVis, coordinates);
+                cout << "Object Detection done!" << endl;
 
-                // Empty tray/No detections scenario
-                if (flag == 0)
-                {
-                    cout << "No detections in frame!" << endl;
-                    pMyClient->writeTray_empty(true);
-                    break;
-                }
-                else
-                    cout << "Object Detection done!" << endl;
-          
+                cout << ".." << endl;
+                readRAW(filtered, depth_scale, coordinates, intrinsics, points3D, cam_nr);
+                cout << ".." << endl;
+
+                sort(points3D.begin(), points3D.end(), sortFunc);
+
                 try
                 {
-                    cout << ".." << endl;
-                    readRAW(filtered, depth_scale, coordinates, intrinsics, points3D, cam_nr);
-                    cout << ".." << endl;
-
-                    sort(points3D.begin(), points3D.end(), sortFunc);
                     cout << "The highest plane is at a height of: " << points3D[0][2] << " mm" << endl;
-
-                    // Print out the post-sorted vector of points
-                    for (int i = 0; i < points3D.size(); i++)
-                    {
-                        cout << "X, Y, Z of Label[" << points3D[i][3] << "] in mm: " << points3D[i][0] << " " << points3D[i][1] << " " << points3D[i][2]
-                            << " with orientation " << points3D[i][4] << " " << endl;
-                    }
                 }
                 catch (std::out_of_range e)
                 {
-                    cout << "ERROR: NO DETECTIONS FIT THE SAFETY CHECK!" << endl;
+                    cout << "ERROR: NO DETECTIONS!" << endl;
+                    pMyClient->writeTray_empty(true);
                     break;
+                }
+
+                // Print out the post-sorted vector of points
+                for (int i = 0; i < points3D.size(); i++)
+                {
+                    cout << "X, Y, Z of Label[" << points3D[i][3] << "] in mm: " << points3D[i][0] << " " << points3D[i][1] << " " << points3D[i][2]
+                        << " with orientation " << points3D[i][4] << " " << endl;
                 }
 
                 // Writing the points to PLC

@@ -13,11 +13,9 @@ using namespace std;
 
 // detects objects in an image using the YOLO library and a set of pre-trained objects from the COCO database;
 // a set of 80 classes is listed in "coco.names" and pre-trained weights are stored in "yolov3.weights"
-int detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThreshold, float nmsThreshold,
+void detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThreshold, float nmsThreshold,
     std::string basePath, std::string classesFile, std::string modelConfiguration, std::string modelWeights, bool bVis, std::vector<int>& coordinates)
 {
-    try
-    {
         // load class names from file
         vector<string> classes;
         ifstream ifs(classesFile.c_str());
@@ -133,12 +131,5 @@ int detectObjects(cv::Mat& img, std::vector<BoundingBox>& bBoxes, float confThre
             cv::imshow(windowName, visImg);
             cv::waitKey(1); // wait for key to be pressed
         }
-
-        return 1;
-    }
-    catch (std::out_of_range e)
-    {
-        return 0;
-    }
 
 }
