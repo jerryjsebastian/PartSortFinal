@@ -36,10 +36,10 @@ std::string logfile(void)
     return name;
 }
 
-// Macro function for sorting points based on z value, in decreasing order
+// Macro function for sorting points based on z value, in increasing order (final heights are measured from the tray level)
 bool sortFunc(const vector<int32_t>& p1, const vector<int32_t>& p2)
 {
-    return p1[2] < p2[2];
+    return p1[2] > p2[2];
 }
 
 int main(int argc, char* argv[]) try
@@ -93,15 +93,18 @@ int main(int argc, char* argv[]) try
         while (1)
         {
             // Selection of camera happens here
-            UaString output = "";
+            UaString output;
             int cam_nr = 2;
-            while (output.operator==(""))
+            BOOL live_bit = true;
+            while (output.operator!=("1") && output.operator!=("2"))
             {
                 pMyClient->readCam_nr(output);
                 if (output.operator==("1"))
                     cam_nr = 0;
                 else if (output.operator==("2"))
                     cam_nr = 0; // change
+                live_bit = !live_bit;
+                pMyClient->writeCam_rdy_2(live_bit); // A live signal to show that the camera is alive
                 _sleep(2000);
             }
             rs2::device dev = devices[cam_nr];
